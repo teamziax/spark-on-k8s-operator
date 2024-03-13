@@ -44,20 +44,14 @@ jobs:
       - name: Build and Push Spark-Operator Docker Image to github container registry
         run: |
           DOCKER_TAG=$(cat charts/spark-operator-chart/Chart.yaml | grep "appVersion: .*" | cut -c13-)
-          docker build -t gcr.io/spark-operator/spark-operator:${DOCKER_TAG} .
+          docker build -t gcr.io/teamziax/spark-operator:${DOCKER_TAG} -f Dockerfile.rh .
           echo "Ideally, we'd release the docker container at this point, but the maintainer of this repo needs to approve..."
-          docker tag gcr.io/spark-operator/spark-operator:${DOCKER_TAG} ghcr.io/googlecloudplatform/spark-operator:${DOCKER_TAG}
-          if ! docker pull ghcr.io/googlecloudplatform/spark-operator:${DOCKER_TAG}; then
-            docker push ghcr.io/googlecloudplatform/spark-operator:${DOCKER_TAG}
+          docker tag gcr.io/teamziax/spark-operator:${DOCKER_TAG} ghcr.io/googlecloudplatform/spark-operator:${DOCKER_TAG}
+          if ! docker pull ghcr.io/teamziax/spark-operator:${DOCKER_TAG}; then
+            docker push ghcr.io/teamziax/spark-operator:${DOCKER_TAG}
           else
             echo "Spark-Operator Docker Image alredy exists"
           fi
-
-      - name: Release Spark-Operator Helm Chart
-        uses: helm/chart-releaser-action@v1.1.0
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-          CR_RELEASE_NAME_TEMPLATE: "spark-operator-chart-{{ .Version }}"
 
       - name: Release Spark-Operator Docker Image
         run: |
@@ -69,8 +63,3 @@ jobs:
             git push origin $DOCKER_TAG
             echo "Spark-Operator Docker Image new tag: $DOCKER_TAG released"
           fi
-
-      - name: Setup tmate session
-        if: failure()
-        uses: mxschmitt/action-tmate@v3
-        timeout-minutes: 15
